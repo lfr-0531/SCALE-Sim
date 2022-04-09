@@ -1,2 +1,6 @@
 Layer name, IFMAP Height, IFMAP Width, Filter Height, Filter Width, Channels, Num Filter, Strides,
 FC_one_out,  1, 8,    1, 8,    1,      2,     1,
+layer2.0.mask_c.atten_c.3,1,1,1,1,16,128,1
+layer4.1.mask_s.atten_s,9,9,3,3,512,1,1
+layer4.1.mask_c.atten_c.0,1,1,1,1,512,128,1
+layer4.1.mask_c.atten_c.3,1,1,1,1,128,512,1

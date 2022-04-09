@@ -8,6 +8,8 @@ def run_net( ifmap_sram_size=1,
              ofmap_sram_size=1,
              array_h=32,
              array_w=32,
+             array_h_vc=32,
+             array_w_vc=32,
              data_flow = 'os',
              topology_file = './topologies/yolo_v2.csv',
              net_name='yolo_v2',
@@ -47,6 +49,8 @@ def run_net( ifmap_sram_size=1,
 
 
     first = True
+
+    total_clk = 0
     
     for row in param_file:
         if first:
@@ -54,11 +58,19 @@ def run_net( ifmap_sram_size=1,
             continue
             
         elems = row.strip().split(',')
-        #print(len(elems))
+        print(elems)
         
         # Do not continue if incomplete line
-        if len(elems) < 9:
-            continue
+        if len(elems) <= 10:
+            l_density   = 1
+            n_density   = 1
+            m_density   = 1
+            vector_core = False
+        else:
+            l_density   = float(elems[8])
+            n_density   = float(elems[9])
+            m_density   = float(elems[10])
+            vector_core = float(elems[11]) > 0
 
         name = elems[0]
         print("")
@@ -83,9 +95,19 @@ def run_net( ifmap_sram_size=1,
         max_bw_log = bw_log
         detailed_log = name + ",\t"
 
+        array_h_cal = array_h_vc if vector_core else array_h
+        array_w_cal = array_w_vc if vector_core else array_w
+        data_flow_cal = 'os' if vector_core else data_flow
+        
+        if vector_core and ifmap_h==1 and ifmap_w==1:
+            array_h_cal, array_w_cal = array_w_cal, array_h_cal
+
         bw_str, detailed_str, util, clk =  \
-            tg.gen_all_traces(  array_h = array_h,
-                                array_w = array_w,
+            tg.gen_all_traces(  array_h = array_h_cal,
+                                array_w = array_w_cal,
+                                l_density = l_density,
+                                n_density = n_density,
+                                m_density = m_density,
                                 ifmap_h = ifmap_h,
                                 ifmap_w = ifmap_w,
                                 filt_h = filt_h,
@@ -93,7 +115,7 @@ def run_net( ifmap_sram_size=1,
                                 num_channels = num_channels,
                                 num_filt = num_filters,
                                 strides = strides,
-                                data_flow = data_flow,
+                                data_flow = data_flow_cal,
                                 word_size_bytes = 1,
                                 filter_sram_size = filter_sram_size,
                                 ifmap_sram_size = ifmap_sram_size,
@@ -132,7 +154,10 @@ def run_net( ifmap_sram_size=1,
         util_str = str(util)
         line = name + ",\t" + clk +",\t" + util_str +",\n"
         cycl.write(line)
+        total_clk += int(clk)
 
+    line = "total" + ",\t" + str(total_clk) +",\t" + str(100.00) +",\n"
+    cycl.write(line)
     bw.close()
     maxbw.close()
     cycl.close()

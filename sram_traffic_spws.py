@@ -5,6 +5,9 @@ from tqdm import tqdm
 def sram_traffic(
         dimension_rows=4,
         dimension_cols=4,
+        l_density = 1,
+        n_density = 1,
+        m_density = 1,
         ifmap_h=7, ifmap_w=7,
         filt_h=3, filt_w=3,
         num_channels=3,
@@ -15,17 +18,20 @@ def sram_traffic(
     ):
 
     # Dimensions of output feature map channel
+    num_channels = math.ceil(num_channels * m_density)
+    num_filt = math.ceil(num_filt * n_density)
     E_h = math.floor((ifmap_h - filt_h + strides) / strides)
     E_w = math.floor((ifmap_w - filt_w + strides) / strides)
+    e2  = math.ceil(E_h * E_w * l_density)
+    print('channel: {}, kernel: {}, spatial: {}'.format(num_channels, num_filt, e2))
+    
     # Number of pixels in one convolution window
     px_per_conv_window = filt_h * filt_w * num_channels
     r2c = px_per_conv_window
 
     # Total number of ofmap px across all channels
-    num_ofmap_px = E_h * E_w * num_filt
-    e2  = E_h * E_w
+    num_ofmap_px = e2 * num_filt
     e2m = num_ofmap_px
-    print('channel: {}, kernel: {}, spatial: {}'.format(num_channels, num_filt, e2))
     
     # Variables to calculate folds in runtime
     num_h_fold = 1
@@ -92,12 +98,12 @@ def sram_traffic(
                                             remaining   = rows_this_fold,
                                             sram_read_trace_file = sram_read_trace_file
                                             )
-                #print("Weights loaded by " + str(cycles) + " cycles")
+                # print("Weights loaded by " + str(cycles) + " cycles")
                 data_out_cycles     = cycles    #Store this cycle for parallel readout
                 cycles_ifmap            = gen_trace_ifmap_partial(
                                             cycle = cycles,
                                             num_rows = dimension_rows, num_cols = dimension_cols,
-                                            num_filters = num_filt,
+                                            num_filters = num_filt, l_density = l_density,
                                             remaining = rem_h,
                                             remaining_filters = remaining_cols, 
                                             ifmap_h = ifmap_h, ifmap_w = ifmap_w,
@@ -119,8 +125,8 @@ def sram_traffic(
                                             sram_write_trace_file = sram_write_trace_file
                                             ) 
 
-                #print("IFMAPS processed by " + str(cycles) + " cycles")
-                util_this_fold = (rows_this_fold * cols_this_fold) /(dimension_rows * dimension_cols)
+                # print("IFMAPS processed by " + str(cycles) + " cycles")
+                util_this_fold = (rows_this_fold * cols_this_fold) /(dimension_rows * dimension_cols) if e2>0 else 0
 
                 rem_h -= rows_this_fold
                 cycles = max(cycles_ifmap, cycles_ofmap)
@@ -150,7 +156,7 @@ def sram_traffic(
 
             cycles_ifmap, rows_this_fold\
                             = gen_ifmap_trace(
-                            cycle = cycles_filter,
+                            cycle = cycles_filter, l_density = l_density,
                             num_rows = dimension_rows, num_cols = dimension_cols,
                             ifmap_h = ifmap_h, ifmap_w = ifmap_w,
                             filt_h = filt_h, filt_w = filt_w,
@@ -250,7 +256,7 @@ def gen_filter_trace(
 
 
 def gen_ifmap_trace(
-        cycle = 0,
+        cycle = 0, l_density = 1,
         num_rows = 4, num_cols = 4,
         ifmap_h = 7, ifmap_w = 7,
         filt_h = 3, filt_w = 3,
@@ -265,7 +271,7 @@ def gen_ifmap_trace(
     
     E_h = math.floor((ifmap_h - filt_h + stride) / stride)
     E_w = math.floor((ifmap_w - filt_w + stride) / stride)
-    e2  = E_h * E_w
+    e2  = E_h * E_w * l_density
     r2c = filt_h * filt_w * num_channels
     rc = filt_w * num_channels
     hc = ifmap_w * num_channels
@@ -366,7 +372,7 @@ def gen_trace_ifmap_partial(
                     ifmap_h = 4, ifmap_w = 4,
                     filt_h = 3, filt_w = 3,
                     num_channels = 3,
-                    stride = 1, 
+                    stride = 1, l_density = 1,
                     ifmap_base = 0, ofmap_base = 2000000,
                     sram_read_trace_file = "sram_read.csv"
 ):
@@ -382,7 +388,7 @@ def gen_trace_ifmap_partial(
     E_w = (ifmap_w - filt_w + stride) / stride 
     E_h = (ifmap_h - filt_h + stride) / stride 
 
-    num_ofmap_px = E_h * E_w
+    num_ofmap_px = E_h * E_w * l_density
     index = r2c - remaining
     base_addr = 0 
             
@@ -466,13 +472,14 @@ def gen_trace_ofmap(
     #cycle = num_cols + cycle     # Accounts for the time taken to reduce accross all cols
 
     # Corner case when parallel_window = 1, but num_filter < num_cols
-    if parallel_window > 1:
-        cycle += num_cols
-        cycle += window_size                # window_size == r2c
-    else:
-        rem    = (num_filter - filters_done)
-        cycle += min(rem, num_cols)
-        cycle += window_size
+    if num_ofmap_px > 0:
+        if parallel_window > 1:
+            cycle += num_cols
+            cycle += window_size                # window_size == r2c
+        else:
+            rem    = (num_filter - filters_done)
+            cycle += min(rem, num_cols)
+            cycle += window_size
 
     #ofmap_add_offset  = filters_done * num_ofmap_px
     ofmap_add_offset  = filters_done

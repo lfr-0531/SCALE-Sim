@@ -1,0 +1,17 @@
+Layer name,IFMAP Height,IFMAP Width,Filter Height,Filter Width,Channels,Num Filter,Strides,l_density,n_density,m_density,vector_core
+features.0,224,224,11,11,3,64,4,1,1.0,1.0,0
+features.3.mask_c.atten_c.0,1,1,1,1,64,16,1,1,1.0,1.0,1
+features.3.mask_c.atten_c.3,1,1,1,1,16,192,1,1,1.0,1.0,1
+features.3,27,27,5,5,64,192,1,1,0.29389405250549316,1.0,0
+features.6.mask_c.atten_c.0,1,1,1,1,192,48,1,1,1.0,1.0,1
+features.6.mask_c.atten_c.3,1,1,1,1,48,384,1,1,1.0,1.0,1
+features.6,13,13,3,3,192,384,1,1,0.8479782044887543,0.29389405250549316,0
+features.8.mask_c.atten_c.0,1,1,1,1,384,96,1,1,1.0,1.0,1
+features.8.mask_c.atten_c.3,1,1,1,1,96,256,1,1,1.0,1.0,1
+features.8,13,13,3,3,384,256,1,1,0.7432823479175568,0.8479782044887543,0
+features.10.mask_c.atten_c.0,1,1,1,1,256,64,1,1,1.0,1.0,1
+features.10.mask_c.atten_c.3,1,1,1,1,64,256,1,1,1.0,1.0,1
+features.10,13,13,3,3,256,256,1,1,0.8146518021821976,0.7432823479175568,0
+classifier.1,1,1,1,1,9216,4096,1,1,1.0,1.0,0
+classifier.4,1,1,1,1,4096,4096,1,1,1.0,1.0,0
+classifier.6,1,1,1,1,4096,1000,1,1,1.0,1.0,0

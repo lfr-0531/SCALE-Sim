@@ -1,14 +1,21 @@
 import os
 import time
+import argparse
 import configparser as cp
 import run_nets as r
-from absl import flags
-from absl import app
+# from absl import flags
+# from absl import app
 
-FLAGS = flags.FLAGS
-#name of flag | default | explanation
-flags.DEFINE_string("arch_config","./configs/scale.cfg","file where we are getting our architechture from")
-flags.DEFINE_string("network","./topologies/conv_nets/alexnet.csv","topology that we are reading")
+
+parser = argparse.ArgumentParser(description='SCALE')
+parser.add_argument('-a', '--arch-cfg', default='file where we are getting our architechture from', type=str)
+parser.add_argument('-n', '--network', default='topology that we are reading', type=str)
+args = parser.parse_args()
+
+# FLAGS = flags.FLAGS
+# #name of flag | default | explanation
+# flags.DEFINE_string("arch_config","./configs/scale.cfg","file where we are getting our architechture from")
+# flags.DEFINE_string("network","./topologies/conv_nets/alexnet.csv","topology that we are reading")
 
 
 class scale:
@@ -21,7 +28,7 @@ class scale:
         arch_sec = 'architecture_presets'
         net_sec  = 'network_presets'
        # config_filename = "./scale.cfg"
-        config_filename = FLAGS.arch_config
+        config_filename = args.arch_cfg
         print("Using Architechture from ",config_filename)
 
         config = cp.ConfigParser()
@@ -45,6 +52,21 @@ class scale:
 
         if len(ar_w) > 1:
             self.ar_w_max = ar_w[1].strip()
+
+        ## Array height min, max of vector core
+        ar_h_vc = config.get(arch_sec, 'ArrayHeight_VC').split(',')
+        self.ar_h_vc_min = ar_h_vc[0].strip()
+
+        if len(ar_h_vc) > 1:
+            self.ar_h_vc_max = ar_h_vc[1].strip()
+        #print("Min: " + ar_h_min + " Max: " + ar_h_max)
+
+        ## Array width min, max of vector core
+        ar_w_vc = config.get(arch_sec, 'ArrayWidth_VC').split(',')
+        self.ar_w_vc_min = ar_w_vc[0].strip()
+
+        if len(ar_w_vc) > 1:
+            self.ar_w_vc_max = ar_w_vc[1].strip()
 
         ## IFMAP SRAM buffer min, max
         ifmap_sram = config.get(arch_sec, 'IfmapSramSz').split(',')
@@ -84,7 +106,7 @@ class scale:
         ## For now that is just the topology csv filename
         #topology_file = config.get(net_sec, 'TopologyCsvLoc')
         #self.topology_file = topology_file.split('"')[1]     #Config reads the quotes as wells
-        self.topology_file= FLAGS.network
+        self.topology_file= args.network
 
     def run_scale(self):
         self.parse_config()
@@ -107,6 +129,7 @@ class scale:
         print("******************* SCALE SIM **********************")
         print("====================================================")
         print("Array Size: \t" + str(self.ar_h_min) + "x" + str(self.ar_w_min))
+        print("VC Size: \t" + str(self.ar_h_vc_min) + "x" + str(self.ar_w_vc_min))
         print("SRAM IFMAP: \t" + str(self.isram_min))
         print("SRAM Filter: \t" + str(self.fsram_min))
         print("SRAM OFMAP: \t" + str(self.osram_min))
@@ -123,6 +146,8 @@ class scale:
                     ofmap_sram_size  = int(self.osram_min),
                     array_h = int(self.ar_h_min),
                     array_w = int(self.ar_w_min),
+                    array_h_vc = int(self.ar_h_vc_min),
+                    array_w_vc = int(self.ar_w_vc_min),
                     net_name = net_name,
                     data_flow = self.dataflow,
                     topology_file = self.topology_file,
@@ -193,12 +218,13 @@ class scale:
 
                 self.run_once()
 
-def main(argv):
-    s = scale(save = False, sweep = False)
-    s.run_scale()
+# def main(argv):
+#     s = scale(save = False, sweep = False)
+#     s.run_scale()
 
 if __name__ == '__main__':
-  app.run(main)
+    s = scale(save = True, sweep = False)
+    s.run_scale()
 '''
 if __name__ == "__main__":
     s = scale(save = False, sweep = False)

@@ -1,0 +1,22 @@
+Layer name,IFMAP Height,IFMAP Width,Filter Height,Filter Width,Channels,Num Filter,Strides
+conv1,230,230,7,7,3,64,2
+layer1.0.conv1,58,58,3,3,64,64,1
+layer1.0.conv2,58,58,3,3,64,64,1
+layer1.1.conv1,58,58,3,3,64,64,1
+layer1.1.conv2,58,58,3,3,64,64,1
+layer2.0.conv1,58,58,3,3,64,128,2
+layer2.0.conv2,30,30,3,3,128,128,1
+layer2.0.downsample.0,56,56,1,1,64,128,2
+layer2.1.conv1,30,30,3,3,128,128,1
+layer2.1.conv2,30,30,3,3,128,128,1
+layer3.0.conv1,30,30,3,3,128,256,2
+layer3.0.conv2,16,16,3,3,256,256,1
+layer3.0.downsample.0,28,28,1,1,128,256,2
+layer3.1.conv1,16,16,3,3,256,256,1
+layer3.1.conv2,16,16,3,3,256,256,1
+layer4.0.conv1,16,16,3,3,256,512,2
+layer4.0.conv2,9,9,3,3,512,512,1
+layer4.0.downsample.0,14,14,1,1,256,512,2
+layer4.1.conv1,9,9,3,3,512,512,1
+layer4.1.conv2,9,9,3,3,512,512,1
+fc,1,1,1,1,512,1000,1

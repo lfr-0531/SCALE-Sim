@@ -3,10 +3,14 @@ import dram_trace as dram
 import sram_traffic_os as sram
 import sram_traffic_ws as sram_ws
 import sram_traffic_is as sram_is
+import sram_traffic_spws as sram_spws
 
 def gen_all_traces(
         array_h = 4,
         array_w = 4,
+        l_density = 1,
+        n_density = 1,
+        m_density = 1,
         ifmap_h = 7, ifmap_w = 7,
         filt_h  = 3, filt_w = 3,
         num_channels = 3,
@@ -65,6 +69,20 @@ def gen_all_traces(
                 ifmap_h = ifmap_h, ifmap_w = ifmap_w,
                 filt_h = filt_h, filt_w = filt_w,
                 num_channels = num_channels,
+                strides = strides, num_filt = num_filt,
+                ofmap_base = ofmap_base, filt_base = filt_base, ifmap_base = ifmap_base,
+                sram_read_trace_file = sram_read_trace_file,
+                sram_write_trace_file = sram_write_trace_file
+            )
+    elif data_flow == 'spws':
+        sram_cycles, util = \
+            sram_spws.sram_traffic(
+                dimension_rows = array_h,
+                dimension_cols = array_w,
+                ifmap_h = ifmap_h, ifmap_w = ifmap_w,
+                filt_h = filt_h, filt_w = filt_w,
+                num_channels = num_channels,
+                l_density = l_density, n_density = n_density, m_density = m_density,
                 strides = strides, num_filt = num_filt,
                 ofmap_base = ofmap_base, filt_base = filt_base, ifmap_base = ifmap_base,
                 sram_read_trace_file = sram_read_trace_file,
@@ -204,6 +222,7 @@ def gen_bw_numbers( dram_ifmap_trace_file, dram_filter_trace_file,
     f = open(dram_ifmap_trace_file, 'r')
     start_clk = 0
     first = True
+    clk = 0
 
     for row in f:
         num_dram_activation_bytes += len(row.split(',')) - 2
